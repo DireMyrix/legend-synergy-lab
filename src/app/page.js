@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Shield, Zap, Target, AlertTriangle, CheckCircle2, Map, Star, Crosshair, ShieldAlert } from "lucide-react";
+import { Shield, Zap, Target, AlertTriangle, CheckCircle2, Map, Star, Crosshair, ShieldAlert, Sparkles, UserCheck } from "lucide-react";
 
-// Alle Legenden mit Fähigkeiten, Map-Präferenzen & Counter-Logik
 const ALL_LEGENDS = [
   // Assault
   { 
@@ -16,7 +15,7 @@ const ALL_LEGENDS = [
     id: "fuse", name: "Fuse", role: "Assault", tags: ["artillery", "zone-control", "entry"],
     tactical: "Knuster-Granate", ult: "Mutterlode (Feuerring)", passive: "Grenadier (Mehr Granaten)",
     bestMaps: ["Worlds Edge", "District"],
-    counters: ["wattson", "rampart", "caustic"], counteredBy: ["wattson"] // Wattson Pylon frisst Knuster
+    counters: ["wattson", "rampart", "caustic"], counteredBy: ["wattson"]
   },
   { 
     id: "ash", name: "Ash", role: "Assault", tags: ["teleport", "tether", "entry"],
@@ -174,6 +173,11 @@ const ALL_LEGENDS = [
 
 export default function Home() {
   const [selectedIds, setSelectedIds] = useState([]);
+  
+  // Smart Recommendation States
+  const [targetMap, setTargetMap] = useState("Storm Point");
+  const [playstyle, setPlaystyle] = useState("zone");
+  const [comfortLegends, setComfortLegends] = useState([]);
 
   const toggleLegend = (id) => {
     if (selectedIds.includes(id)) {
@@ -185,7 +189,52 @@ export default function Home() {
     }
   };
 
+  const toggleComfortLegend = (id) => {
+    if (comfortLegends.includes(id)) {
+      setComfortLegends(comfortLegends.filter((item) => item !== id));
+    } else {
+      setComfortLegends([...comfortLegends, id]);
+    }
+  };
+
   const selectedLegends = ALL_LEGENDS.filter((l) => selectedIds.includes(l.id));
+
+  // Smart Recommendation Logic
+  const getRecommendedComps = () => {
+    let pool = ALL_LEGENDS.filter((l) => l.bestMaps.includes(targetMap));
+    
+    // Falls das Team spezifische Comfort-Legenden angegeben hat, diese priorisieren
+    if (comfortLegends.length > 0) {
+      const comfortInPool = pool.filter((l) => comfortLegends.includes(l.id));
+      if (comfortInPool.length >= 2) {
+        pool = comfortInPool;
+      }
+    }
+
+    let rec1, rec2, rec3;
+
+    if (playstyle === "zone") {
+      rec1 = ["wattson", "bangalore", "crypto"];
+      rec2 = ["catalyst", "newcastle", "bloodhound"];
+      rec3 = ["caustic", "gibraltar", "pathfinder"];
+    } else if (playstyle === "edge") {
+      rec1 = ["horizon", "bangalore", "bloodhound"];
+      rec2 = ["revenant", "conduit", "madmaggie"];
+      rec3 = ["alter", "fuse", "pathfinder"];
+    } else {
+      rec1 = ["crypto", "bangalore", "wattson"];
+      rec2 = ["bloodhound", "bangalore", "horizon"];
+      rec3 = ["seer", "catalyst", "valkyrie"];
+    }
+
+    return [rec1, rec2, rec3];
+  };
+
+  const recommendedComps = getRecommendedComps();
+
+  const applyRecommendedComp = (compArray) => {
+    setSelectedIds(compArray);
+  };
 
   // Analyse der Comp, Counter & Map-Rating
   const analyzeComp = () => {
@@ -194,11 +243,9 @@ export default function Home() {
     const roles = selectedLegends.map((l) => l.role);
     const tags = selectedLegends.flatMap((l) => l.tags);
 
-    // Counter Analyse
     const allCounters = selectedLegends.flatMap((l) => l.counters);
     const allThreats = selectedLegends.flatMap((l) => l.counteredBy);
 
-    // Häufigste gekonterte Gegnereigenschaften
     const hardCounterTargets = Array.from(new Set(allCounters));
     const majorThreats = Array.from(new Set(allThreats));
 
@@ -207,7 +254,6 @@ export default function Home() {
     let synergies = [];
     let weaknesses = [];
 
-    // Synergien
     if (tags.includes("smoke") && tags.includes("scan")) {
       synergies.push({
         title: "Smoke & Vision Wallhack Combo",
@@ -240,7 +286,6 @@ export default function Home() {
       weaknesses.push("Kein Controller: Kein Zugriff auf Ring-Consolen für Zonen-Vorhersagen.");
     }
 
-    // Map-Bewertung (Sterne)
     const mapScores = {
       "Worlds Edge": selectedLegends.filter((l) => l.bestMaps.includes("Worlds Edge")).length,
       "Storm Point": selectedLegends.filter((l) => l.bestMaps.includes("Storm Point")).length,
@@ -262,13 +307,109 @@ export default function Home() {
           </h1>
           <p className="text-xs text-gray-400">Apex Legends Squad & Counter Optimizer</p>
         </div>
-        <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-gray-300 font-mono">v1.2</span>
+        <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-gray-300 font-mono">v1.3</span>
       </header>
+
+      {/* NEW: SMART RECOMMENDATION ENGINE */}
+      <div className="bg-gradient-to-br from-apexCard to-white/5 border border-apexGold/30 rounded-xl p-4 mb-6 shadow-xl">
+        <h2 className="text-xs font-bold text-apexGold uppercase tracking-widest mb-3 flex items-center gap-1.5">
+          <Sparkles size={16} /> Smart Recommendation Generator
+        </h2>
+
+        {/* Step 1: Map Selection */}
+        <div className="mb-3">
+          <p className="text-[11px] text-gray-400 mb-1">1. Welche Map spielt ihr?</p>
+          <div className="grid grid-cols-3 gap-2">
+            {["Storm Point", "Worlds Edge", "District"].map((m) => (
+              <button
+                key={m}
+                onClick={() => setTargetMap(m)}
+                className={`py-1.5 text-xs rounded border transition ${
+                  targetMap === m
+                    ? "bg-apexGold text-black font-bold border-apexGold"
+                    : "bg-white/5 border-white/10 text-gray-300"
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Step 2: Playstyle Selection */}
+        <div className="mb-3">
+          <p className="text-[11px] text-gray-400 mb-1">2. Was ist euer präferierter Spielstil?</p>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { id: "zone", label: "Hard Zone / Anchor" },
+              { id: "edge", label: "Aggressive Edge" },
+              { id: "vision", label: "Heavy Vision / Scan" },
+            ].map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setPlaystyle(p.id)}
+                className={`py-1.5 text-[11px] rounded border transition ${
+                  playstyle === p.id
+                    ? "bg-apexRed text-white font-bold border-apexRed"
+                    : "bg-white/5 border-white/10 text-gray-300"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Step 3: Comfort Pool (Legenden des Teams) */}
+        <div className="mb-4">
+          <p className="text-[11px] text-gray-400 mb-1 flex items-center gap-1">
+            <UserCheck size={12} /> 3. Welcher Legenden-Pool beherrscht euer Team? (Optional):
+          </p>
+          <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto p-1 bg-black/20 rounded border border-white/5">
+            {ALL_LEGENDS.map((l) => {
+              const isComfort = comfortLegends.includes(l.id);
+              return (
+                <button
+                  key={l.id}
+                  onClick={() => toggleComfortLegend(l.id)}
+                  className={`text-[10px] px-2 py-0.5 rounded border transition ${
+                    isComfort
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold"
+                      : "bg-white/5 text-gray-400 border-white/5"
+                  }`}
+                >
+                  {l.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Suggestions Outputs */}
+        <div className="border-t border-white/10 pt-3">
+          <p className="text-[11px] font-bold text-gray-300 mb-2">Empfohlene Lineups übernehmen:</p>
+          <div className="space-y-2">
+            {recommendedComps.map((comp, idx) => (
+              <div key={idx} className="flex justify-between items-center bg-black/30 p-2 rounded border border-white/5">
+                <span className="text-xs font-bold text-gray-200">
+                  {comp.map((id) => ALL_LEGENDS.find((l) => l.id === id)?.name).join(" + ")}
+                </span>
+                <button
+                  onClick={() => applyRecommendedComp(comp)}
+                  className="bg-apexRed/80 hover:bg-apexRed text-white text-[10px] font-bold px-2.5 py-1 rounded transition"
+                >
+                  Übernehmen
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Trio Auswahlanzeige & Abilities */}
       <div className="bg-apexCard border border-white/10 rounded-xl p-4 mb-6 shadow-xl">
         <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex justify-between items-center">
-          <span>Dein Trio ({selectedIds.length}/3)</span>
+          <span>Dein Aktuelles Trio ({selectedIds.length}/3)</span>
           {selectedIds.length > 0 && (
             <button onClick={() => setSelectedIds([])} className="text-apexRed text-[11px] underline">
               Zurücksetzen
@@ -285,7 +426,7 @@ export default function Home() {
                 className={`rounded-lg border flex flex-col p-3 transition ${
                   legend
                     ? "border-apexRed/60 bg-gradient-to-b from-apexRed/10 to-apexCard"
-                    : "border-dashed border-white/10 bg-white/5 items-center justify-center h-32"
+                    : "border-dashed border-white/10 bg-white/5 items-center justify-center h-28"
                 }`}
               >
                 {legend ? (
@@ -312,7 +453,7 @@ export default function Home() {
 
       {/* Legenden-Auswahl-Raster */}
       <div className="space-y-4 mb-8">
-        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Wähle 3 Legenden:</h2>
+        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Manuell auswählen oder anpassen:</h2>
         
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {ALL_LEGENDS.map((legend) => {
@@ -381,7 +522,6 @@ Map-Eignung
 
           {/* COUNTER-SECTION */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            {/* Eure Comp kontert */}
             <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg">
               <h4 className="text-xs font-bold text-emerald-400 uppercase mb-2 flex items-center gap-1">
                 <Crosshair size={14} /> Stark Gegen (Counters)
@@ -398,7 +538,6 @@ Map-Eignung
               </div>
             </div>
 
-            {/* Gegen diese Legenden müsst ihr aufpassen */}
             <div className="bg-rose-500/10 border border-rose-500/20 p-3 rounded-lg">
               <h4 className="text-xs font-bold text-rose-400 uppercase mb-2 flex items-center gap-1">
                 <ShieldAlert size={14} /> Vorsicht Vor (Gefahren)
