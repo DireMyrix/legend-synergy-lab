@@ -138,6 +138,21 @@ export default function Home() {
         >
           <Calendar size={18} /> Termine
         </button>
+</nav>
+      {/* Hier fügst du diesen Block neu ein: */}
+      <footer className="p-4 text-center text-[10px] text-gray-500 border-t border-white/5 space-y-2 mb-16">
+        <p>
+          Diese Website ist ein inoffizielles Fan-Projekt und steht in keiner Verbindung mit Electronic Arts Inc. oder Respawn Entertainment.
+        </p>
+        <p>
+          Apex Legends und ALGS sind eingetragene Marken von Electronic Arts Inc.
+        </p>
+        <div className="pt-1">
+          <a href="/impressum" className="underline hover:text-gray-300">Impressum & Datenschutz</a>
+        </div>
+      </footer>
+
+      <nav className="fixed bottom-0 w-full max-w-md bg-apexCard border-t border-white/10 flex justify-around py-3 px-2">
       </nav>
     </div>
   );
