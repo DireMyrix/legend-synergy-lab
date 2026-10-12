@@ -1,4 +1,5 @@
 import "./globals.css";
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata = {
   title: "ALGS Pro League Tracker",
@@ -18,6 +19,7 @@ export default function RootLayout({ children }) {
         <div class="w-full max-w-md min-h-screen bg-apexDark flex flex-col justify-between border-x border-white/5">
           {children}
         </div>
+        <Analytics />
       </body>
     </html>
   );
