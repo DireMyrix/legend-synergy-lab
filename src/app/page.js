@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Shield, Zap, Target, AlertTriangle, CheckCircle2, Map, Star, Crosshair, ShieldAlert, Sparkles, UserCheck } from "lucide-react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { 
+  Zap, Target, AlertTriangle, CheckCircle2, Map, Star, 
+  Crosshair, ShieldAlert, Sparkles, UserCheck, Share2, Copy 
+} from "lucide-react";
 
 const ALL_LEGENDS = [
   // Assault
@@ -171,13 +175,27 @@ const ALL_LEGENDS = [
   },
 ];
 
-export default function Home() {
+function LabContent() {
+  const searchParams = useSearchParams();
   const [selectedIds, setSelectedIds] = useState([]);
-  
+  const [copied, setCopied] = useState(false);
+
   // Smart Recommendation States
   const [targetMap, setTargetMap] = useState("Storm Point");
   const [playstyle, setPlaystyle] = useState("zone");
   const [comfortLegends, setComfortLegends] = useState([]);
+
+  // URL-Parameter auslesen beim ersten Laden
+  useEffect(() => {
+    const compParam = searchParams.get("c");
+    if (compParam) {
+      const ids = compParam.split(",");
+      const validIds = ids.filter(id => ALL_LEGENDS.some(l => l.id === id));
+      if (validIds.length > 0) {
+        setSelectedIds(validIds.slice(0, 3));
+      }
+    }
+  }, [searchParams]);
 
   const toggleLegend = (id) => {
     if (selectedIds.includes(id)) {
@@ -197,20 +215,19 @@ export default function Home() {
     }
   };
 
+  // Share Link Funktion
+  const copyShareLink = () => {
+    if (selectedIds.length === 0) return;
+    const shareUrl = `${window.location.origin}?c=${selectedIds.join(",")}`;
+    navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
   const selectedLegends = ALL_LEGENDS.filter((l) => selectedIds.includes(l.id));
 
   // Smart Recommendation Logic
   const getRecommendedComps = () => {
-    let pool = ALL_LEGENDS.filter((l) => l.bestMaps.includes(targetMap));
-    
-    // Falls das Team spezifische Comfort-Legenden angegeben hat, diese priorisieren
-    if (comfortLegends.length > 0) {
-      const comfortInPool = pool.filter((l) => comfortLegends.includes(l.id));
-      if (comfortInPool.length >= 2) {
-        pool = comfortInPool;
-      }
-    }
-
     let rec1, rec2, rec3;
 
     if (playstyle === "zone") {
@@ -236,7 +253,7 @@ export default function Home() {
     setSelectedIds(compArray);
   };
 
-  // Analyse der Comp, Counter & Map-Rating
+  // Analyse der Comp
   const analyzeComp = () => {
     if (selectedLegends.length < 3) return null;
 
@@ -307,10 +324,10 @@ export default function Home() {
           </h1>
           <p className="text-xs text-gray-400">Apex Legends Squad & Counter Optimizer</p>
         </div>
-        <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-gray-300 font-mono">v1.3</span>
+        <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-gray-300 font-mono">v1.4</span>
       </header>
 
-      {/* NEW: SMART RECOMMENDATION ENGINE */}
+      {/* SMART RECOMMENDATION GENERATOR */}
       <div className="bg-gradient-to-br from-apexCard to-white/5 border border-apexGold/30 rounded-xl p-4 mb-6 shadow-xl">
         <h2 className="text-xs font-bold text-apexGold uppercase tracking-widest mb-3 flex items-center gap-1.5">
           <Sparkles size={16} /> Smart Recommendation Generator
@@ -360,7 +377,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Step 3: Comfort Pool (Legenden des Teams) */}
+        {/* Step 3: Comfort Pool */}
         <div className="mb-4">
           <p className="text-[11px] text-gray-400 mb-1 flex items-center gap-1">
             <UserCheck size={12} /> 3. Welcher Legenden-Pool beherrscht euer Team? (Optional):
@@ -406,16 +423,29 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Trio Auswahlanzeige & Abilities */}
+      {/* Trio Auswahlanzeige */}
       <div className="bg-apexCard border border-white/10 rounded-xl p-4 mb-6 shadow-xl">
-        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex justify-between items-center">
-          <span>Dein Aktuelles Trio ({selectedIds.length}/3)</span>
-          {selectedIds.length > 0 && (
-            <button onClick={() => setSelectedIds([])} className="text-apexRed text-[11px] underline">
-              Zurücksetzen
-            </button>
-          )}
-        </h2>
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+            Dein Aktuelles Trio ({selectedIds.length}/3)
+          </h2>
+          <div className="flex gap-2">
+            {selectedIds.length > 0 && (
+              <>
+                <button
+                  onClick={copyShareLink}
+                  className="text-[11px] bg-white/10 hover:bg-white/20 text-white font-bold px-2.5 py-1 rounded flex items-center gap-1 transition"
+                >
+                  {copied ? <CheckCircle2 size={12} className="text-emerald-400" /> : <Share2 size={12} />}
+                  {copied ? "Link kopiert!" : "Teilen"}
+                </button>
+                <button onClick={() => setSelectedIds([])} className="text-apexRed text-[11px] underline">
+                  Zurücksetzen
+                </button>
+              </>
+            )}
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[0, 1, 2].map((slotIndex) => {
@@ -604,5 +634,13 @@ Map-Eignung
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="text-center p-8 text-white text-xs">Lade Synergy Lab...</div>}>
+      <LabContent />
+    </Suspense>
   );
 }
