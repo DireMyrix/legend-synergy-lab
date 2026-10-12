@@ -321,7 +321,7 @@ function LabContent() {
           <h1 className="text-xl font-black text-apexRed tracking-wider flex items-center gap-2">
             <Zap className="text-apexRed fill-apexRed" size={20} /> LEGEND SYNERGY LAB
           </h1>
-          <p className="text-xs text-gray-400">Apex Legends Squad & Counter Optimizer</p>
+          <p className="text-xs text-gray-400">Squad & Counter Optimizer</p>
         </div>
         <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-gray-300 font-mono">v1.5</span>
       </header>
