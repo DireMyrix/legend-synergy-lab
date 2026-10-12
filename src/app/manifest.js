@@ -1,0 +1,12 @@
+export default function manifest() {
+  return {
+    short_name: "ALGS Tracker",
+    name: "ALGS Pro League Companion",
+    description: "Live Schedules & Standings for Apex Legends Pro League",
+    start_url: "/",
+    background_color: "#0F1115",
+    theme_color: "#FF2442",
+    display: "standalone",
+    orientation: "portrait"
+  };
+}
